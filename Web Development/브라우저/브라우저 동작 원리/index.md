@@ -40,7 +40,7 @@ TCP의 3방향 핸드셰이크 기술을 "SYN-SYN-ACK" (더 정확히는 SYN, SY
 
 - SYN: 접속 요청 (synchronize sequence number)
 - ACK: 요청 수락 (acknowledgement)
-- 마지막 ACK와 함께 데이터 전송 가
+- 마지막 ACK와 함께 데이터 전송 가능
 
 ### TLS 협상(TLS Negotiation)
 
