@@ -216,8 +216,100 @@ Access-Control-Max-Age: 86400
 
 마지막으로 `Access-Control-Max-Age`는 다른 preflight request를 보내지 않고, preflight request에 대한 응답을 캐시할 수 있는 시간(초)을 제공합니다. 위의 코드는 86400초 (24시간) 입니다. 각 브라우저의 최대 캐싱 시간은 `Access-Control-Max-Age` 가 클수록 우선순위가 높습니다.
 
-### Preflighted requests 와 리다이렉트
+#### Preflighted requests 와 리다이렉트
 
 모든 브라우저가 preflighted request 후 리다이렉트를 지원하지는 않습니다. preflighted request 후 리다이렉트가 발생하면 일부 브라우저는 다음과 같은 오류 메시지를 띄웁니다.
 
 > 요청이 https://example.com/foo 로 리다이렉트 되었으며, preflight가 필요한 cross-origin 요청은 허용되지 않습니다.
+
+> 요청에 preflight가 필요합니다. preflight는 cross-origin 리다이렉트를 허용하지 않습니다.
+
+CORS 프로토콜은 본래 그 동작(리다이렉트)이 필요했지만, 이후 더 이상 필요하지 않도록 변경되었습니다. 그러나 모든 브라우저가 변경 사항을 구현하지는 않았기 때문에, 본래의 필요한 동작은 여전히 나타납니다.
+
+브라우저가 명세를 따라잡을 때 까지 다음 중 하나 혹은 둘 다를 수행하여 이 제한을 해결할 수 있습니다.
+
+- preflight 리다이렉트를 방지하기 위해 서버측 동작을 변경
+- preflight를 발생시키지 않는 simple request가 되도록 요청을 변경
+
+이것이 가능하지 않은 경우 다른 방법도 있습니다.
+
+1. Fetch API를 통해 `Response.url` 이나 `XMLHttpRequest.responseURL`를 사용하여 simple request를 작성합니다. 이 simple request를 이용하여 실제 preflighted request가 끝나는 URL을 판별하세요.
+2. 첫 번째 단계에서 `Response.url` 혹은 `XMLHttpRequest.responseURL` 로부터 얻은 URL을 사용하여 또 다른 요청(실제 요청)을 만듭니다.
+
+그러나 요청에 `Authorization` 헤더가 있기 때문에 preflight를 트리거하는 요청일 경우에, 위의 단계를 사용하여 제한을 제거할 수 없습니다. 또한 요청이 있는 서버를 제어하지 않으면 문제를 해결할 수 없습니다.
+
+### 자격 증명을 포함한 요청
+
+`XMLHttpRequest` 혹은 Fetch 를 사용할 때 CORS 에 의해 드러나는 가장 흥미로운 기능은 "credentialed" requests 입니다. credentialed requests는 HTTP cookies 와 HTTP Authentication 정보를 인식합니다. 기본적으로 cross-site `XMLHttpRequest` 나 Fetch 호출에서 브라우저는 자격 증명을 보내지 않습니다. `XMLHttpRequest` 객체나 `Request` 생성자가 호출될 때 특정 플래그를 설정해야 합니다.
+
+이 예제에서 원래 `https://foo.example` 에서 불러온 컨텐츠는 쿠키를 설정하는 `https://bar.other` 리소스에 simple GET request를 작성합니다. foo.example의 내용은 다음과 같은 Javascript를 포함할 수 있습니다.
+
+```js
+const invocation = new XMLHttpRequest();
+const url = 'http://bar.other/resources/credentialed-content/';
+
+function callOtherDomain() {
+  if (invocation) {
+    invocation.open('GET', url, true);
+    invocation.withCredentials = true;
+    invocation.onreadystatechange = handler;
+    invocation.send();
+  }
+}
+```
+
+7행은 쿠키와 함께 호출하기위한 `XMLHttpRequest` 의 플래그를 보여줍니다. 이 플래그는 `withCredentials` 라고 불리며 부울 값을 갖습니다. 기본적으로 호출은 쿠키 없이 이루어집니다. 이것은 simple `GET` request이기 때문에 preflighted 되지 않습니다. 그러나 브라우저는 `Access-Control-Allow-Credentials`: `true` 헤더가 없는 응답을 거부합니다. 따라서 호출된 웹 컨텐츠에 응답을 제공하지 않습니다.
+
+![alt text](image-2.png)
+
+클라이언트와 서버간의 통신 예제는 다음과 같습니다.
+
+```http
+GET /resources/credentialed-content/ HTTP/1.1
+Host: bar.other
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:71.0) Gecko/20100101 Firefox/71.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip,deflate
+Connection: keep-alive
+Referer: https://foo.example/examples/credential.html
+Origin: https://foo.example
+Cookie: pageAccess=2
+
+
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2008 01:34:52 GMT
+Server: Apache/2
+Access-Control-Allow-Origin: https://foo.example
+Access-Control-Allow-Credentials: true
+Cache-Control: no-cache
+Pragma: no-cache
+Set-Cookie: pageAccess=3; expires=Wed, 31-Dec-2008 01:34:53 GMT
+Vary: Accept-Encoding, Origin
+Content-Encoding: gzip
+Content-Length: 106
+Keep-Alive: timeout=2, max=100
+Connection: Keep-Alive
+Content-Type: text/plain
+
+
+[text/plain payload]
+```
+
+10행에는 `https://bar.other`의 컨텐츠를 대상으로 하는 쿠키가 포함되어 있습니다. 하지만 17행의 `Access-Control-Allow-Credentials`: `true`로 응답하지 않으면, 응답은 무시되고 웹 컨텐츠는 제공되지 않습니다.
+
+#### 실행 전 요청 및 자격 증명
+
+CORS 실행 전 요청에는 자격 증명이 포함되지 않아야 합니다. 실행 전 요청에 대한 응답은 `Access-Control-Allow-Credentials: true`를 지정하여 자격 증명으로 실제 요청을 수행할 수 있음을 나타내야 합니다.
+
+#### 자격 증명 요청 및 와일드카드(Credentialed requests and wildcards)
+
+자격 증명 요청에 응답할 때 서버는 반드시 "`*`" 와일드카드를 지정하는 대신 `Access-Control-Allow-Origin` 헤더 값에 출처를 지정해야 합니다.
+
+위 예제의 요청 헤더에 `Cookie` 헤더가 포함되어 있기 때문에 `Access-Control-Allow-Origin` 헤더의 값이 "*"인 경우 요청이 실패합니다. 위 요청은 `Access-Control-Allow-Origin` 헤더가 "`*`" 와일드 카드가 아니라 "`https://foo.example`" 본래 주소이기 때문에 자격증명 인식 컨텐츠는 웹 호출 컨텐츠로 리턴됩니다.
+
+위 예제의 `Set-Cookie` 응답 헤더는 추가 쿠키를 설정합니다. 실패한 경우 사용한 API에 따라 예외가 발생합니다.
+
+#### Third-party cookies
+
+CORS 응답에 설정된 쿠키에는 일반적인 third-party cookie 정책이 적용됩니다. 위의 예제는 `foo.example` 에서 페이지를 불러오지만 20행의 쿠키는 `bar.other` 가 전송합니다. 때문에 사용자의 브라우저 설정이 모든 third-party cookies를 거부하도록 되어 있다면, 이 쿠키는 저장되지 않습니다.
