@@ -313,3 +313,117 @@ CORS 실행 전 요청에는 자격 증명이 포함되지 않아야 합니다. 
 #### Third-party cookies
 
 CORS 응답에 설정된 쿠키에는 일반적인 third-party cookie 정책이 적용됩니다. 위의 예제는 `foo.example` 에서 페이지를 불러오지만 20행의 쿠키는 `bar.other` 가 전송합니다. 때문에 사용자의 브라우저 설정이 모든 third-party cookies를 거부하도록 되어 있다면, 이 쿠키는 저장되지 않습니다.
+
+## HTTP 응답 헤더
+
+이 섹션에서는 Cross-Origin 리소스 공유 명세에 정의된 대로 서버가 접근 제어 요청을 위해 보내는 HTTP 응답 헤더가 나열되어 있습니다.
+
+### Access-Control-Allow-Origin
+
+리턴된 리소스에는 다음 구문과 함께 하나의 `Access-Control-Allow-Origin` 헤더가 있을 수 있습니다.
+
+```
+Access-Control-Allow-Origin: <origin> | *
+```
+
+`Access-Control-Allow-Origin` 은 단일 출처를 지정하여 브라우저가 해당 출처가 리소스에 접근하도록 허용합니다. 또는 자격 증명이 없는 요청의 경우 "`*`" 와일드 카드는 브라우저의 origin에 상관없이 모든 리소스에 접근하도록 허용합니다.
+
+예를들어 `http://mozilla.org` 의 코드가 리소스에 접근 할 수 있도록 하려면 다음과 같이 지정할 수 있습니다.
+
+```
+Access-Control-Allow-Origin: https://mozilla.org
+```
+
+서버가 "`*`" 와일드카드 대신에 하나의 origin을 지정하는 경우, 서버는 `Vary` 응답 헤더에 `Origin` 을 포함해야 합니다. 이 origin은 화이트 리스트의 일부로 요청 origin에 따라 동적으로 변경될 수 있습니다. 서버 응답이 `Origin` 요청 헤더에 따라 다르다는것을 클라이언트에 알려줍니다.
+
+### Access-Control-Expose-Headers
+
+`Access-Control-Expose-Header` 헤더를 사용하면 브라우저가 접근할 수 있는 헤더를 서버의 화이트리스트에 추가할 수 있습니다.
+
+```
+Access-Control-Expose-Header: <header-name>[, <header-name>]*
+```
+
+예를들면 다음과 같습니다.
+
+```
+Access-Control-Expose-Headers: X-My-Custom-Header, X-Another-Custom-Header
+```
+
+`X-My-Custom-Header` 와 `X-Another-Custom-Header` 헤더가 브라우저에 드러납니다.
+
+### Access-Control-Max-Age
+
+`Access-Control-Max-Age` 헤더는 preflight request 요청 결과를 캐시할 수 있는 시간을 나타냅니다. preflight request 예제는 위를 참조하세요.
+
+```
+Access-Control-Max-Age: <delta-seconds>
+```
+
+`delta-seconds` 파라미터는 결과를 캐시할 수 있는 시간(초)를 나타냅니다.
+
+### Access-Control-Allow-Credentials
+
+`Access-Control-Allow-Credentials` 헤더는 `credentials` 플래그가 true일 때 요청에 대한 응답을 표시할 수 있는지를 나타냅니다. preflight request에 대한 응답의 일부로 사용하는 경우, credentials을 사용하여 실제 요청을 수행할 수 있는지를 나타냅니다. simple `GET` requests는 preflighted되지 않으므로 credentials이 있는 리소스를 요청하면, 이 헤더가 리소스와 함께 반환되지 않습니다. 이 헤더가 없으면 브라우저에서 응답을 무시하고 웹 컨텐츠로 반환되지 않는다는 점을 주의하세요.
+
+```
+Access-Control-Allow-Credentials: true
+```
+
+Credentialed requests 은 위에 설명되어 있습니다.
+
+### Access-Control-Allow-Methods
+
+`Access-Control-Allow-Methods` 헤더는 리소스에 접근할 때 허용되는 메서드를 지정합니다. 이 헤더는 preflight request에 대한 응답으로 사용됩니다. 요청이 preflighted 되는 조건은 위에 설명되어 있습니다.
+
+```
+Access-Control-Allow-Methods: <method>[, method]*
+```
+
+이 헤더를 브라우저로 전송하는 예제를 포함하여 preflight request 의 예제는, 위에 나와 있습니다.
+
+### Access-Control-Allow-Headers
+
+preflight request 에 대한 응답으로 `Access-Control-Allow-Headers` 헤더가 사용됩니다. 실제 요청시 사용할 수 있는 HTTP 헤더를 나타냅니다.
+
+```
+Access-Control-Allow-Headers: <header-name>[, <header-name>]*
+```
+
+## HTTP 요청 헤더
+
+이 섹션에는 cross-origin 공유 기능을 사용하기 위해 클라이언트가 HTTP 요청을 발행할 때 사용할 수 있는 헤더가 나열되어 있습니다. 이 헤더는 서버를 호출할 때 설정됩니다. cross-site `XMLHttpRequest` 기능을 사용하는 개발자는 프로그래밍 방식으로 cross-origin 공유 요청 헤더를 설정할 필요가 없습니다.
+
+### Origin
+
+`Origin` 헤더는 cross-site 접근 요청 또는 preflight request의 출처를 나타냅니다.
+
+```
+Origin: <origin>
+```
+
+origin 은 요청이 시작된 서버를 나타내는 URI 입니다. 경로 정보는 포함하지 않고, 오직 서버 이름만 포함합니다.
+
+> 참고: `origin` 값은 `null` 또는 URI 가 올 수 있습니다.
+
+접근 제어 요청에는 항상 `Origin` 헤더가 전송됩니다.
+
+### Access-Control-Request-Method
+
+`Access-Control-Request-Method` 헤더는 실제 요청에서 어떤 HTTP 메서드를 사용할지 서버에게 알려주기 위해, preflight request 할 때에 사용됩니다.
+
+```
+Access-Control-Request-Method: <method>
+```
+
+이 사용법의 예제는 위에서 찾을 수 있습니다.
+
+### Access-Control-Request-Headers
+
+`Access-Control-Request-Headers` 헤더는 실제 요청에서 어떤 HTTP 헤더를 사용할지 서버에게 알려주기 위해, preflight request 할 때에 사용됩니다.
+
+```
+Access-Control-Request-Headers: <field-name>[, <field-name>]*
+```
+
+이 사용법의 예제는 위에서 찾을 수 있습니다.
