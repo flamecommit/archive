@@ -198,7 +198,7 @@ Time to Interactive (TTI)는 DNS 조회와 SSL 연결이 이루어지는 첫 요
 ## 요약 
 
 - 도메인으로 DNS에서 IP주소를 찾음
-- TCP 핸드셰이크 : 연결 확인
+- TCP 3way핸드셰이크 : 연결 확인
 - TLS 협상 : 보안성 있는 연결을 위함
 - DOM 트리 구축 : 브라우저가 구문 분석기(Parser)로 토큰화와 트리 구조를 생성
 - 프리로드 스캐너 : CSS, Javascript, 웹 폰트 같이 우선순위가 높은 자원을 요청
