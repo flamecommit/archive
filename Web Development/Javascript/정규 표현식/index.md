@@ -255,6 +255,34 @@ console.log(re.exec(str)); // null
 console.log(str.match(re)); // ["fee ", "fi ", "fo "]
 ```
 
+## 정규식 기호 모음
+
+### 정규식 특정 문자 숫자 매칭 패턴
+
+|---|---|
+|패턴|의미|
+|---|---|
+|a-zA-Z|영어알파벳(-으로 범위 지정)|
+|ㄱ-ㅎ가-힣|한글 문자(-으로 범위 지정)|
+|0-9|숫자(-으로 범위 지정)|
+|.|모든 문자열(숫자, 한글, 영어, 특수기호, 공백 모두)<br />단, 줄바꿈 X|
+|\d|숫자|
+|\D|숫자가 아닌 것|
+|\w|밑줄 문자를 포함한 영숫자 문자에 대응<br />[A-Za-z0-9_]와 동일|
+|||
+|||
+|||
+|||
+|||
+|||
+|||
+|||
+|||
+|||
+|||
+|||
+
 ## 레퍼런스
 
 - https://developer.mozilla.org/ko/docs/Web/JavaScript/Guide/Regular_expressions
+- https://inpa.tistory.com/entry/JS-%F0%9F%93%9A-%EC%A0%95%EA%B7%9C%EC%8B%9D-RegExp-%EB%88%84%EA%B5%AC%EB%82%98-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0-%EC%89%BD%EA%B2%8C-%EC%A0%95%EB%A6%AC
