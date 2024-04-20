@@ -156,3 +156,105 @@ const myArray = myRe.exec("cdbbdbsbz");
     </tr>
   </tbody>
 </table>
+
+위 예제의 두 번째 형태처럼, 정규 표현식 객체를 변수에 대입하지 않고도 사용할 수 있습니다. 하지만, 이러면 매 사용마다 정규 표현식 객체가 새로 생성되며, 업데이트되는 속성에 접근할 수 없습니다. 다음과 같은 코드를 생각해보겠습니다.
+
+```js
+const myRe = /d(b+)d/g;
+const myArray = myRe.exec("cdbbdbsbz");
+console.log(`lastIndex의 값은 ${myRe.lastIndex}`);
+
+// "lastIndex의 값은 5"
+```
+
+그러나 위의 코드 대신 아래 코드를 사용하게 되면
+
+```js
+const myArray = /d(b+)d/g.exec("cdbbdbsbz");
+console.log(`lastIndex의 값은 ${/d(b+)d/g.lastIndex}`);
+
+// "lastIndex의 값은 0"
+```
+
+두 개의 `/d(b+)d/g`는 서로 다른 정규 표현식 객체이므로 별개의 `lastIndex` 속성을 갖습니다. 정규 표현식 객체의 속성에 접근해야 하면, 우선 변수에 할당하세요.
+
+
+### 플래그를 활용한 고급 탐색
+
+정규 표현식은 전역 탐색이나 대소문자 무시와 같은 특성을 지정하는 플래그를 가질 수 있습니다. 플래그는 단독으로 사용할 수도 있고, 순서에 상관 없이 한꺼번에 여럿을 지정할 수도 있습니다.
+
+|---|---|
+|플래그|설명|
+|---|---|
+|`d`|부분 문자열 일치에 대해 인덱스 생성|
+|`g`|전역 탐색|
+|`i`|대소문자를 구분하지 않음|
+|`m`|여러 줄에 걸쳐 탐색|
+|`s`|개행 문자가 `.`과 일치함|
+|`u`|"unicode", 패턴을 유니코드 코드 포인트의 시퀀스로 간주함|
+|`y`|"접착" 탐색, 대상 문자열의 현재 위치에서 탐색을 시작함|
+
+플래그는 다음과 같은 구문으로 정규 표현식에 지정할 수 있습니다.
+
+```js
+const re = /pattern/flags;
+```
+
+생성자를 사용할 경우 이렇게 지정합니다.
+
+```js
+const re = new RegExp("pattern", "flags");
+```
+
+플래그는 정규식과 완전히 합쳐지므로 나중에 추가하거나 제거할 수 없습니다.
+
+예를 들어, `re = /\w+\s/g`는 한 개 이상의 글자와 그 뒤의 공백 하나를, 문자열 전체에 대해 탐색합니다.
+
+```js
+const re = /\w+\s/g;
+const str = "fee fi fo fum";
+const myArray = str.match(re);
+console.log(myArray);
+
+// ["fee ", "fi ", "fo "]
+```
+
+아래 코드는...
+
+```js
+const re = /\w+\s/g;
+```
+
+이렇게 생성자를 사용하도록 바꿀 수도 있습니다.
+
+```js
+const re = new RegExp("\\w+\\s", "g");
+```
+
+두 구문 모두 동일한 결과를 낳습니다.
+
+`m` 플래그는 여러 줄에 걸친 입력 문자열을 여러 줄로 취급하게 합니다. 달리 말해, `m`플래그를 지정할 경우, `^`와 `$`는 각각 전체 입력 문자열의 시작과 끝이 아니라, 각 줄의 시작과 끝에 대응하게 됩니다.
+
+### exec()과 전역 탐색 플래그 사용하기
+
+`RegExp.prototype.exec()` 메서드와 `g` 플래그를 사용하면, 일치한 부분 문자열들과 각각의 인덱스를 하나씩 순차적으로 반환합니다.
+
+```js
+const str = "fee fi fo fum";
+const re = /\w+\s/g;
+
+console.log(re.exec(str)); // ["fee ", index: 0, input: "fee fi fo fum"]
+console.log(re.exec(str)); // ["fi ", index: 4, input: "fee fi fo fum"]
+console.log(re.exec(str)); // ["fo ", index: 7, input: "fee fi fo fum"]
+console.log(re.exec(str)); // null
+```
+
+반면, `String.prototype.match()` 메서드는 모든 일치를 한 번에 반환하지만, 각각의 인덱스는 포함하지 않습니다.
+
+```js
+console.log(str.match(re)); // ["fee ", "fi ", "fo "]
+```
+
+## 레퍼런스
+
+- https://developer.mozilla.org/ko/docs/Web/JavaScript/Guide/Regular_expressions
