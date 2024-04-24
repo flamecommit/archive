@@ -1,5 +1,7 @@
 # Array.prototype.fill()
 
+## 요약
+
 - 설명 : 배열의 인덱스 범위 내에 있는 모든 요소를 정적 값으로 변경합니다. 그 후 수정된 배열을 반환합니다.
 - 메서드 분류 : 변경 메서드
 - 원본 수정 : O
@@ -9,7 +11,8 @@
 const array1 = [1, 2, 3, 4];
 const array2 = array1.fill(0, 2, 4);
 
-console.log(array1, array2);
+console.log(array1); // [1, 2, 3, 4]
+console.log(array2); // [1, 2, 0, 0]
 ```
 
 ## 구문
